@@ -1,8 +1,8 @@
 #include <SPI.h>
 #include <mcp2515.h>
 
-int power;
-int powerbtn;
+int power = -1;
+int lastpower = -1;
 
 const int remote = 8;
 
@@ -28,6 +28,7 @@ const int vrb = 14;
 // Timing for polling the encoder
 unsigned long currentTime;
 unsigned long lastTime;
+unsigned long lastPowerTime;
 unsigned long lastButtonTime;
 
 // Storing the readings
@@ -79,7 +80,6 @@ const int bx = 40;
 void setup() {
   Serial.begin(115200);
 
-  powerbtn = -1;
   power = -1;
 
   pinMode(remote, OUTPUT);
@@ -90,8 +90,9 @@ void setup() {
 
   // Set up the timing of the polling
   currentTime = millis();
-  lastButtonTime = currentTime;
+  lastPowerTime = currentTime;
   lastTime = currentTime;
+  lastButtonTime = currentTime;
 
 
   //pinMode(41, OUTPUT);
@@ -165,19 +166,6 @@ void loop() {
 
     if (digitalRead(bx) == LOW) {
       Serial.write('x');
-
-
-      if (power == -1) {
-        power = 1;
-        powerbtn = 1;
-      } else if (power == 0) {
-        power = 1;
-        powerbtn = 2;
-      }else if (power == 1) {
-        power = 0;
-        powerbtn = 0;
-      }
-
 
       lastButtonTime = currentTime;
     } else  if (digitalRead(b1) == LOW) {
@@ -260,39 +248,12 @@ void loop() {
 
       if (canMsg.can_id == 0x0de) {
         if (canMsg.data[0] == 0x03) {
-
-          if (power == 1 && powerbtn !=2) {
-            power = 0;
-            Serial.write('x');
-          }
-          else if (power == -1) {
-            power = 0;
-          }
-
+          power = 0;
 
         } else if (canMsg.data[0] == 0x00) {
-          if (power == -1) {
-            power = 1;
-            Serial.write('x');
-          }
-          if (power == 0) {
-
-            if (powerbtn != 0 && powerbtn != 2) {
-              power = 1;
-              Serial.write('x');
-            }
-
-             if (powerbtn == 2) {
-              power = 1;
-              powerbtn = 1;
-            }
-
-          }
+          power = 1;
         }
-      }
-
-
-      else if (canMsg.can_id == 0x045) {
+      }else if (canMsg.can_id == 0x045) {
         if (canMsg.data[4] == 0x10) {
           Serial.write('+');
           lastButtonTime = currentTime;
@@ -310,9 +271,7 @@ void loop() {
           lastButtonTime = currentTime;
 
         }
-      }
-
-      else if (canMsg.can_id == 0x3f6) {
+      }else if (canMsg.can_id == 0x3f6) {
         if (canMsg.data[1] == 0x10) {
           Serial.write('v');
           lastButtonTime = currentTime;
@@ -322,13 +281,16 @@ void loop() {
 
     }
   }
-
-  if (power == 0 || power == -1) {
-    digitalWrite(remote, LOW);
-  } else if (power == 1) {
-    digitalWrite(remote, HIGH);
+  if (lastpower != power && currentTime >= (lastPowerTime + 6000)) {
+      if (power == 0 || power == -1) {
+      digitalWrite(remote, LOW);
+      Serial.write('w');
+    } else if (power == 1) {
+      digitalWrite(remote, HIGH);
+      Serial.write('x');
+    }
+    lastPowerTime = currentTime;
+    lastpower = power;
   }
-
- 
-
+    
 }

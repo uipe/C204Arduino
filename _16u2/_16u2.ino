@@ -108,6 +108,10 @@ void loop() {
     Keyboard.press(KEY_F7);
     Keyboard.releaseAll();
     Serial.println(c);
+  }else if (c == 'w') {
+    Keyboard.press(KEY_F8);
+    Keyboard.releaseAll();
+    Serial.println(c);
   }
   
   else if (c == 'i') {

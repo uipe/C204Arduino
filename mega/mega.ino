@@ -7,8 +7,14 @@ int powerbtn;
 const int remote = 8;
 
 struct can_frame canMsg;
+
+struct can_frame canMsg2;
+
 MCP2515 mcp2515(10);
-const int can = 2;
+
+MCP2515 can2(11);
+
+//const int can = 2;
 
 // Setting up the counter
 int reading = 0;

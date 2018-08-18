@@ -60,7 +60,11 @@ void loop() {
     Consumer.write(CONSUMER_BROWSER_HOME);
    Serial.println(c);
   }else if (c == 'x') {
-    Consumer.write(CONSUMER_POWER);
+    Keyboard.press(KEY_F8);
+   Serial.println(c);
+  }
+  }else if (c == 'v') {
+    Keyboard.press(KEY_F9);
    Serial.println(c);
   }
 
@@ -102,6 +106,38 @@ void loop() {
     Serial.println(c);
   }else if (c == 'h') {
     Keyboard.press(KEY_F7);
+    Keyboard.releaseAll();
+    Serial.println(c);
+  }
+  
+  else if (c == 'i') {
+    Keyboard.press(KEY_BACKSPACE);
+    Keyboard.releaseAll();
+    Serial.println(c);
+  }
+  
+  else if (c == 'l') {
+    Keyboard.press(KEY_LEFT_ARROW);
+    Keyboard.releaseAll();
+    Serial.println(c);
+  }
+  else if (c == 'm') {
+    Keyboard.press(KEY_RIGHT_ARROW);
+    Keyboard.releaseAll();
+    Serial.println(c);
+  }
+  else if (c == 'n') {
+    Keyboard.press(KEY_UP_ARROW);
+    Keyboard.releaseAll();
+    Serial.println(c);
+  }
+  else if (c == 'o') {
+    Keyboard.press(KEY_DOWN_ARROW);
+    Keyboard.releaseAll();
+    Serial.println(c);
+  }
+  else if (c == 'p') {
+    Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     Serial.println(c);
   }

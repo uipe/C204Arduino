@@ -267,8 +267,9 @@ void loop() {
       lastButtonTime = currentTime;
 
     }
-
-     if (can2.readMessage(&canMsg2) == MCP2515::ERROR_OK) {
+    
+    if (can2.readMessage(&canMsg2) == MCP2515::ERROR_OK) {
+      Serial.write('T');
       if (canMsg2.can_id == 0x0fd) {
         
        
@@ -307,11 +308,11 @@ void loop() {
           Serial.write('i');
           lastButtonTime = currentTime;
         }
+      }
     }
-    
+   
     
     if (mcp2515.readMessage(&canMsg) == MCP2515::ERROR_OK) {
-
       if (canMsg.can_id == 0x0de) {
 		if (canMsg.data[0] == 0x03) {
             power = 0;
@@ -332,14 +333,13 @@ void loop() {
           lastButtonTime = currentTime;
 
         } else if (canMsg.data[4] == 0x40) {
-          Serial.write('h');
-          lastButtonTime = currentTime;
+         
+            Serial.write('h');
+            lastButtonTime = currentTime;
+          
 
-        }else if (canMsg.data[3] == 0x04) {
-          Serial.write('c');
-          lastButtonTime = currentTime;
-
-        }
+        } //else
+        
         
       }
 
@@ -348,13 +348,18 @@ void loop() {
           Serial.write('v');
           lastButtonTime = currentTime;
 
-        }
+        } else if (canMsg.data[1] == 0x40)
+
+        {
+          
+            Serial.write('c');
+            lastButtonTime = currentTime;
+          }
       }
 
     }
   }
-
-  }
+  
   if (lastpower != power && currentTime >= (lastPowerTime + 6000)) {
     if (power == 0 || power == -1) {
       digitalWrite(remote, LOW);
@@ -364,6 +369,7 @@ void loop() {
     lastPowerTime = currentTime;
     lastpower = power;
   }
+  //debug digitalWrite(remote, HIGH);
   
   if (power == 1 && currentTime >= (lastCanWriteTime + 500)) {
     mcp2515.sendMessage(&canauxmod);

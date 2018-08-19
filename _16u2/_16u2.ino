@@ -62,7 +62,7 @@ void loop() {
   }else if (c == 'x') {
     Keyboard.press(KEY_F8);
    Serial.println(c);
-  }
+  
   }else if (c == 'v') {
     Keyboard.press(KEY_F9);
    Serial.println(c);
@@ -137,21 +137,18 @@ void loop() {
     Serial.println(c);
   }
   else if (c == 'p') {
+    
     Keyboard.press(KEY_RETURN);
     Keyboard.releaseAll();
     Serial.println(c);
-  }
-  
-  
-  
-  else 
-  
-  if ( (c >= '!' && c <= 'z')) {
+    
+  } 
+  else if ( (c >= '!' && c <= 'z')) {
     Keyboard.press(c);
     Keyboard.releaseAll();
     Serial.println(c);
   }
   Keyboard.releaseAll();
   
-    USBDevice.wakeupHost();
+  //USBDevice.wakeupHost();
 }

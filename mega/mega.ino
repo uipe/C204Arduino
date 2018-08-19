@@ -1,8 +1,8 @@
 #include <SPI.h>
 #include <mcp2515.h>
 
-int power;
-int powerbtn;
+int power = -1;
+int lastpower = -1;
 
 const int remote = 8;
 
@@ -12,7 +12,11 @@ struct can_frame canMsg2;
 
 MCP2515 mcp2515(10);
 
-MCP2515 can2(11);
+MCP2515 can2(9);
+
+
+struct can_frame canauxmod;
+struct can_frame canradioon;
 
 //const int can = 2;
 
@@ -29,6 +33,9 @@ const int vrb = 14;
 unsigned long currentTime;
 unsigned long lastTime;
 unsigned long lastButtonTime;
+unsigned long lastPowerTime;
+
+unsigned long lastCanWriteTime;
 
 // Storing the readings
 
@@ -79,7 +86,6 @@ const int bx = 40;
 void setup() {
   Serial.begin(115200);
 
-  powerbtn = -1;
   power = -1;
 
   pinMode(remote, OUTPUT);
@@ -92,8 +98,8 @@ void setup() {
   currentTime = millis();
   lastButtonTime = currentTime;
   lastTime = currentTime;
-
-
+  lastPowerTime = currentTime;
+  lastCanWriteTime = currentTime;
   //pinMode(41, OUTPUT);
 
   pinMode(b1, INPUT_PULLUP);
@@ -128,6 +134,25 @@ void setup() {
   mcp2515.reset();
   mcp2515.setBitrate(CAN_125KBPS, MCP_8MHZ);
   mcp2515.setNormalMode();
+  
+  
+  canauxmod.can_id  = 0x37b;
+  canauxmod.can_dlc = 8;
+  canauxmod.data[0] = 0x21;
+  canauxmod.data[1] = 0x53;
+  canauxmod.data[2] = 0x41;
+  canauxmod.data[3] = 0x75;
+  canauxmod.data[4] = 0x78;
+  canauxmod.data[5] = 0x00;
+  canauxmod.data[6] = 0xe0;
+  canauxmod.data[7] = 0x05;
+
+  canradioon.can_id  = 0x1ee;
+  canradioon.can_dlc = 3;
+  canradioon.data[0] = 0xC8;
+  canradioon.data[1] = 0x00;
+  canradioon.data[2] = 0xc1;
+ 
 
 }
 
@@ -243,41 +268,41 @@ void loop() {
 
     }
 
-     if (can2.readMessage(&canMsg1) == MCP2515::ERROR_OK) {
-      if (canMsg.can_id == 0x0fd) {
+     if (can2.readMessage(&canMsg2) == MCP2515::ERROR_OK) {
+      if (canMsg2.can_id == 0x0fd) {
         
        
-        if (canMsg.data[2] == 0x40) {
+        if (canMsg2.data[2] == 0x40) {
         //esq
           Serial.write('l');
           lastButtonTime = currentTime;
 
-        } else if (canMsg.data[2] == 0x04) {
+        } else if (canMsg2.data[2] == 0x04) {
          //dis
           Serial.write('m');
           lastButtonTime = currentTime;
           
-        } else if (canMsg.data[2] == 0x01) {
+        } else if (canMsg2.data[2] == 0x01) {
           //cim
           Serial.write('n');
           lastButtonTime = currentTime;
           
-        }else if (canMsg.data[2] == 0x10) {
+        }else if (canMsg2.data[2] == 0x10) {
           //baixo
           Serial.write('o');
           lastButtonTime = currentTime;
           
-        }else if (canMsg.data[1] == 0x80) {
+        }else if (canMsg2.data[1] == 0x80) {
         //center
         Serial.write('p');
           lastButtonTime = currentTime;
           
-        }else if (canMsg.data[0] == 0x02) {
+        }else if (canMsg2.data[0] == 0x02) {
         //tras
           Serial.write('k');
           lastButtonTime = currentTime;
           
-        }else if (canMsg.data[0] == 0x20) {
+        }else if (canMsg2.data[0] == 0x20) {
         //c
           Serial.write('i');
           lastButtonTime = currentTime;
@@ -288,14 +313,12 @@ void loop() {
     if (mcp2515.readMessage(&canMsg) == MCP2515::ERROR_OK) {
 
       if (canMsg.can_id == 0x0de) {
+		if (canMsg.data[0] == 0x03) {
             power = 0;
         } else if (canMsg.data[0] == 0x00) {
             power = 1;
-        }
-      }
-
-
-      else if (canMsg.can_id == 0x045) {
+		}
+      } else if (canMsg.can_id == 0x045) {
         if (canMsg.data[4] == 0x10) {
           Serial.write('+');
           lastButtonTime = currentTime;
@@ -331,14 +354,20 @@ void loop() {
     }
   }
 
-  if (power == 0 || power == -1) {
-    digitalWrite(remote, LOW);
-  } else if (power == 1) {
-    digitalWrite(remote, HIGH);
   }
-
+  if (lastpower != power && currentTime >= (lastPowerTime + 6000)) {
+    if (power == 0 || power == -1) {
+      digitalWrite(remote, LOW);
+    } else if (power == 1) {
+      digitalWrite(remote, HIGH);
+    }
+    lastPowerTime = currentTime;
+    lastpower = power;
+  }
   
-
- 
-
+  if (power == 1 && currentTime >= (lastCanWriteTime + 500)) {
+    mcp2515.sendMessage(&canauxmod);
+    can2.sendMessage(&canradioon);
+    lastCanWriteTime = currentTime;
+  }
 }

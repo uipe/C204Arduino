@@ -36,6 +36,7 @@ unsigned long lastButtonTime;
 unsigned long lastPowerTime;
 
 unsigned long lastCanWriteTime;
+unsigned long lastAuxWriteTime;
 
 // Storing the readings
 
@@ -100,6 +101,7 @@ void setup() {
   lastTime = currentTime;
   lastPowerTime = currentTime;
   lastCanWriteTime = currentTime;
+  lastAuxWriteTime = currentTime;
   //pinMode(41, OUTPUT);
 
   pinMode(b1, INPUT_PULLUP);
@@ -134,6 +136,10 @@ void setup() {
   mcp2515.reset();
   mcp2515.setBitrate(CAN_125KBPS, MCP_8MHZ);
   mcp2515.setNormalMode();
+
+  can2.reset();
+  can2.setBitrate(CAN_125KBPS, MCP_8MHZ);
+  can2.setNormalMode();
   
   
   canauxmod.can_id  = 0x37b;
@@ -151,7 +157,7 @@ void setup() {
   canradioon.can_dlc = 3;
   canradioon.data[0] = 0xC8;
   canradioon.data[1] = 0x00;
-  canradioon.data[2] = 0xc1;
+  canradioon.data[2] = 0xc3;
  
 
 }
@@ -371,9 +377,16 @@ void loop() {
   }
   //debug digitalWrite(remote, HIGH);
   
-  if (power == 1 && currentTime >= (lastCanWriteTime + 500)) {
-    mcp2515.sendMessage(&canauxmod);
+ // if (power == 1 && currentTime >= (lastCanWriteTime + 100)) {
+     if (currentTime >= (lastCanWriteTime + 100)) {
     can2.sendMessage(&canradioon);
     lastCanWriteTime = currentTime;
   }
+
+   if (power == 1 && currentTime >= (lastAuxWriteTime + 1000)) {
+    mcp2515.sendMessage(&canauxmod);
+    lastAuxWriteTime = currentTime;
+  }
+
+  
 }
